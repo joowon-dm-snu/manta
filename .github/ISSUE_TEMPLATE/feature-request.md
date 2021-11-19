@@ -28,7 +28,7 @@ It would be really nice if you could add a sudo code-blocks.
 <!--- Please describe the source you got motivations from (if neccessary)-->
 
 
-### 🐤 Discutions
+### 🐤 Discussions
 <!--- 
 Please put list of topics you want to discuss. (if necessary)
 
