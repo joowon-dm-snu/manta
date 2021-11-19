@@ -32,5 +32,5 @@ It would be really nice if you could add a sudo code-blocks.
 <!--- 
 Please put list of topics you want to discuss. (if necessary)
 
-- [ ] any topic you want to dicsuss
+- [ ] any topic you want to discuss
 -->
