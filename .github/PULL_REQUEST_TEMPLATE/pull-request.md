@@ -22,7 +22,7 @@ Please describe the details about your pull request
 It would be really nice if you could add a sudo code-blocks or images
 -->
 
-### Check lists
+### ☑️ Check lists
 <!--- 
 Please check if your PR meets the following conditions
 -->
