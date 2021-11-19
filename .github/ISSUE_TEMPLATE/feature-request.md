@@ -2,7 +2,7 @@
 name: Feature Request
 about: Suggest a new feature for MANTA!
 title: "[Feature] "
-labels: ''
+labels: 'feature request'
 assignees: ''
 
 ---
