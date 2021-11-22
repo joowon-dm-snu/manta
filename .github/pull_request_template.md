@@ -1,11 +1,7 @@
----
-name: Pull Request - feature proposal
-about: A pull request for feature proposal
-title: "[PR] "
-labels: ''
-assignees: ''
-
----
+<!---
+feature title for abstract: [Feature][Abstract]: <pull_request name>: <pull_request name> 
+featrue title for implementatoin: [Feature][Implementation]: <pull_request name>
+---!>
 
 <!--- 
 We really appreciate your contribution. 
