@@ -20,17 +20,6 @@ class Config(object):
         mc.config.param = 0
         ```
 
-        Working like nested dict
-        ```python
-        mc.config.nested.param1 = 1
-        mc.config['nested']['param2'] = 2
-        ```
-
-        Input by initiation phase
-        ```python
-        mc.init(config={'param1': 1, 'param2': 2})
-        ```
-
         From ArgumentParser
         ```python
         parser = argparse.ArgumentParser()
@@ -41,18 +30,14 @@ class Config(object):
         mc.config.update(args)
         ```
 
-        From argparse.Namespace
-        ```python
-        args = argparse.Namespace()
-        args.something = 123
-
-        mc.config.something = 0
-        mc.config.update(args)
-        ```
-
         From yaml
         ```python
         mc.config.update_yaml(yaml_path)
+        ```
+
+        Input by initiation phase
+        ```python
+        mc.init(config={'param1': 1, 'param2': 2})
         ```
     """
 
@@ -64,12 +49,13 @@ class Config(object):
         self._load_defaults()
 
     def _load_defaults(self):
-        conf_dict = util.read_config_yaml("config_defaults.yaml")
+        conf_dict = util.read_config_yaml(path="config_defaults.yaml")
         self.update(conf_dict)
 
     def _assert_dict_values(self, v: Any) -> None:
         return True
 
+    # TODO: consider we need sanitize
     def _sanitize(self, k: str, v: Any) -> Tuple:
         k = k.rstrip("_|-")
         v = util.json_value_sanitize(v)
@@ -98,10 +84,10 @@ class Config(object):
 
     def update(self, param):
         if isinstance(param, str):
-            data = util.read_config_yaml(param)
-
-        # TODO: (kjw): try-except usage
-        data = util.to_dict(param)
+            data = util.read_config_yaml(path=param)
+        else:
+            # TODO: (kjw): try-except usage
+            data = util.to_dict(param)
         data = self._sanitize_dict(data)
         self._items.update(data)
 

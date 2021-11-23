@@ -30,11 +30,22 @@ def read_yaml(path: Union[str, Path], encoding="utf-8") -> Dict:
     return result
 
 
-def read_config_yaml(path: Union[str, Path], keyname: str = "value") -> Dict:
-    # TODO: (kjw) this process can be efficient but think this is not a time-consuming issue
+def read_config_yaml(
+    path: Union[str, Path] = None, data: Dict = None, keyname: str = "value"
+) -> Dict:
+    if path and data is None:
+        data = read_yaml(path)
+    elif path is None and data:
+        pass
+    else:
+        raise AttributeError()
+
     result = dict()
-    for k, v in read_yaml(path).items():
-        result[k] = v[keyname]
+    for k, v in data.items():
+        if isinstance(v, Dict) and keyname not in v:
+            result[k] = read_config_yaml(data=v)
+        else:
+            result[k] = v[keyname]
     return result
 
 
@@ -46,12 +57,10 @@ def save_yaml(path: Union[str, Path], info: Dict) -> None:
 
 
 def to_dict(params):
-    if isinstance(params, dict):
+    if isinstance(params, Dict):
         return params
     elif isinstance(params, argparse.Namespace):
-        pass
-    elif isinstance(params, argparse.ArgumentParser):
-        pass
+        return vars(params)
     else:
         try:
             params = params.items()
