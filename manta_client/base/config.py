@@ -3,7 +3,6 @@ from typing import Any, Dict, Tuple  # , Union
 # from pathlib import Path
 
 import manta_client.util as util
-from manta_client.errors import ConfigError
 
 
 # TODO: (kjw) need to think depth. ex) config.param1.param2 or config.param1.param2.params3...
@@ -66,11 +65,10 @@ class Config(object):
 
     def _load_defaults(self):
         conf_dict = util.read_config_yaml("config_defaults.yaml")
-        if conf_dict is not None:
-            self.update(conf_dict)
+        self.update(conf_dict)
 
     def _assert_dict_values(self, v: Any) -> None:
-        raise NotImplementedError()
+        return True
 
     def _sanitize(self, k: str, v: Any) -> Tuple:
         k = k.rstrip("_|-")
@@ -83,17 +81,17 @@ class Config(object):
 
         for k, v in config_dict.items():
             k, v = self._sanitize(k, v)
-            sanitized[k] = v
+
+            if isinstance(v, Dict):
+                sanitized[k] = self._sanitize_dict(v)
+            else:
+                sanitized[k] = v
         return sanitized
 
     def __setitem__(self, k, v):
         self._assert_dict_values(v)
-        v = self._sanitize(k)
+        k, v = self._sanitize(k, v)
         self._items[k] = v
-
-        print("config __setitem__ {} = {} - {}".format(k, v, self._callback))
-        if self._callback:
-            self._callback(key=k, val=v)
 
     def __setattr__(self, k, v):
         return self.__setitem__(k, v)
@@ -106,9 +104,6 @@ class Config(object):
         data = util.to_dict(param)
         data = self._sanitize_dict(data)
         self._items.update(data)
-
-        if self._callback:
-            self._callback(data=data)
 
     def __getitem__(self, k):
         return self._items[k]

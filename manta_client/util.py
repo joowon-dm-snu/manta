@@ -18,12 +18,13 @@ def mkdir(path: Union[str, Path], exist_ok: bool = True) -> bool:
 
 def read_yaml(path: Union[str, Path], encoding="utf-8") -> Dict:
     result = dict()
+
     try:
         with open(path, encoding=encoding) as f:
             for param in yaml.load_all(f, Loader=yaml.FullLoader):
                 result.update(param)
     except OSError:
-        raise Error("Couldn't read yaml file: %s" % path)
+        print("Couldn't read yaml file: %s" % path)
     except UnicodeDecodeError:
         print("wrong encoding")
     return result
@@ -60,4 +61,5 @@ def to_dict(params):
 
 
 def json_value_sanitize(value):
+    # TODO: tensor values will be change to float here
     return value
