@@ -2,7 +2,27 @@ import copy
 import enum
 import itertools
 import os
-from typing import Any, Dict, Generator, Iterable
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
+
+from manta_client.errors import Error
+
+settings_defaults = dict(base_url="https://mvp.coxwave.com/api")
+
+ENV_PREFIX = "MANTA_"
 
 
 class Settings(object):
@@ -29,75 +49,118 @@ class Settings(object):
         SETTINGS: int = 12
         ARGS: int = 13
 
-    def __init__(self) -> None:
-        super().__init__()
+    __frozen = False
+    __source_info = dict()
+
+    def __init__(
+        self,
+        base_url: str = None,
+        api_key: str = None,
+        entity: str = None,
+        project: str = None,
+        experiment_id: str = None,
+        _start_time: int = None,
+        **kwargs,
+    ) -> None:
+        kwargs = dict(locals())
+        kwargs.pop("self")
+        self.__dict__.update({k: None for k in kwargs})
+
+        object.__setattr__(self, "_Settings__frozen", False)
+        object.__setattr__(self, "_Settings__source_info", dict())
+        self._update(kwargs, _source=self.UpdateSource.SETTINGS)
 
     def __copy__(self) -> "Settings":
-        raise NotImplementedError()
+        s = Settings()
+        s.update_settings(self)
+        return s
 
     def duplicate(self) -> "Settings":
         return copy.copy(self)
 
-    def _priority_ok(self, *args, **kwargs) -> bool:
-        raise NotImplementedError()
+    def _priority_ok(
+        self,
+        k: str,
+        source: Optional[int],
+    ) -> bool:
+        key_source: Optional[int] = self.__source_info.get(k)
+        if not key_source or not source:
+            return True
+        if source < key_source:
+            return False
+        return True
 
-    def _update(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
+    def _update(
+        self, data: Dict[str, Any] = None, _source: Optional[int] = None, **kwargs: Any
+    ) -> None:
+        if self.__frozen:
+            raise TypeError("Settings object is frozen")
 
-    def update(self, item: Dict = None, **kwargs: Any) -> None:
-        raise NotImplementedError()
+        data = data or dict()
+        result = {}
+        for check in data, kwargs:
+            for k in check.keys():
+                if k not in self.__dict__:
+                    raise KeyError(k)
+                v = check[k]
+                if v is None or not self._priority_ok(k, source=_source):
+                    continue
+                result[k] = v
 
-    def update_defaults(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
+        for k, v in result.items():
+            if isinstance(v, list):
+                v = tuple(v)
+            self.__dict__[k] = v
+            if _source:
+                self.__source_info[k] = _source
+
+    def update(self, data: Dict = None, _source=None, **kwargs: Any) -> None:
+        self._update(data, _source=_source, **kwargs)
+
+    def update_defaults(self, defaults: Optional[Dict] = None) -> None:
+        defaults = defaults or settings_defaults
+        self._update(defaults, _source=self.UpdateSource.BASE)
 
     def update_envs(self, environ: os._Environ) -> None:
-        raise NotImplementedError()
+        """ """
+        # TODO: (kjw) add logic for env key to usable key
+        data = dict()
+        for k, v in environ.items():
+            data[k.replace(ENV_PREFIX, "").lower()] = v
+        self._update(data, _source=self.UpdateSource.ENV)
 
-    def update_settings(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
-
-    def update_login(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
-
-    def update_init(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
+    def update_settings(self, settings: "Settings") -> None:
+        for k in settings._public_keys():
+            source = settings.__source_info.get(k)
+            self._update({k: settings[k]}, _source=source)
 
     def keys(self) -> Iterable[str]:
         return itertools.chain(self._public_keys(), self._property_keys())
 
-    def _public_keys(self):
-        raise NotImplementedError()
+    def _public_keys(self) -> Iterator[str]:
+        return filter(lambda x: not x.startswith("_Settings__"), self.__dict__)
 
-    def _private_keys(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def _property_keys(cls) -> Generator[str, None, None]:
-        return (k for k, v in vars(cls).items() if isinstance(v, property))
-
-    @classmethod
-    def _class_keys(cls) -> Generator[str, None, None]:
-        return (
-            k
-            for k, v in vars(cls).items()
-            if not k.startswith("_") and not callable(v) and not isinstance(v, property)
-        )
+    def _property_keys(self) -> Generator[str, None, None]:
+        return (k for k, v in vars(self).items() if isinstance(v, property))
 
     def __getitem__(self, k: str) -> Any:
-        props = self._public_keys()
+        props = self._property_keys()
         if k in props:
             return getattr(self, k)
         return self.__dict__[k]
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name not in self.__dict__:
-            raise AttributeError(name)
-        if self._Private__frozen:
-            raise TypeError("Settings object is frozen")
-        object.__setattr__(self, name, value)
+    def __setitem__(self, k: str, v: Any) -> None:
+        return self.__setattr__(k, v)
+
+    def __setattr__(self, k: str, v: Any) -> None:
+        try:
+            self._update({k: v}, _source=self.UpdateSource.SETUP)
+        except KeyError as e:
+            raise AttributeError(str(e))
+        object.__setattr__(self, k, v)
 
     def freeze(self):
-        self._Private_frozen = True
-    
+        self.__frozen = True
+
     def is_frozen(self):
-        return self._Private_frozen
+        return self.__frozen
