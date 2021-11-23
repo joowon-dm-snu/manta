@@ -1,5 +1,4 @@
 import copy
-import os
 import pytest
 
 import manta_client as mc
@@ -9,8 +8,8 @@ from manta_client.errors import SettingError
 
 def test_initial_defaults():
     s = Settings()
-    s.init()
-    assert s.base_url == "https://api.coxwave.com"
+    s.update_defaults()
+    assert s.base_url == "https://mvp.coxwave.com/api"
 
 
 def test_attrib_get_set():
@@ -25,7 +24,7 @@ def test_attrib_get_invalid_key():
     s = Settings()
     with pytest.raises(AttributeError):
         s.invalid_key
-    with pytest.raises(AttributeError):
+    with pytest.raises(KeyError):
         s["invalid_key"]
 
 
@@ -54,28 +53,6 @@ def test_update_both():
     s.update(dict(base_url="something"), project="nothing")
     assert s.base_url == "something"
     assert s.project == "nothing"
-
-
-def test_ignore_globs():
-    s = Settings()
-    s.setdefaults()
-    assert s.ignore_globs == ()
-
-
-def test_ignore_globs_explicit():
-    s = Settings(ignore_globs=["foo"])
-    s.setdefaults()
-    assert s.ignore_globs == ("foo",)
-
-
-def test_ignore_globs_env():
-    s = Settings()
-    s._apply_environ({"manta_IGNORE_GLOBS": "foo,bar"})
-    s.setdefaults()
-    assert s.ignore_globs == (
-        "foo",
-        "bar",
-    )
 
 
 def test_update_defaults():
@@ -112,7 +89,7 @@ def test_invalid_kwargs():
         s.update(invalid="test")
 
 
-def test_no_update_for_invalid():
+def test_no_update_for_invalid_inputs():
     s = Settings()
     with pytest.raises(KeyError):
         s.update(dict(project="noop0"), invalid="test")
@@ -151,7 +128,7 @@ def test_freeze():
 #         s.update(mode="badpro")
 
 
-def test_prio_update_ok():
+def test_priority_update_ok():
     s = Settings()
     s.update(project="pizza", _source=s.UpdateSource.ENTITY)
     assert s.project == "pizza"
@@ -159,29 +136,9 @@ def test_prio_update_ok():
     assert s.project == "pizza2"
 
 
-def test_prio_update_ignore():
+def test_priority_update_ignore():
     s = Settings()
     s.update(project="pizza", _source=s.UpdateSource.PROJECT)
     assert s.project == "pizza"
     s.update(project="pizza2", _source=s.UpdateSource.ENTITY)
     assert s.project == "pizza"
-
-
-def test_validate_base_url():
-    s = Settings()
-    with pytest.raises(ValueError):
-        s.update(base_url="https://coxwave.app")
-    s.update(base_url="https://api.coxwave.app")
-    assert s.base_url == "https://api.coxwave.app"
-
-
-def test_preprocess_base_url():
-    s = Settings()
-    s.update(base_url="http://host.com")
-    assert s.base_url == "http://host.com"
-    s.update(base_url="http://host.com/")
-    assert s.base_url == "http://host.com"
-    s.update(base_url="http://host.com///")
-    assert s.base_url == "http://host.com"
-    s.update(base_url="//http://host.com//")
-    assert s.base_url == "//http://host.com"
