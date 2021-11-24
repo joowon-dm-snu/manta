@@ -1,3 +1,5 @@
+__version__ = "0.1.0"
+
 import manta_client as mc
 from manta_client.base.config import Config
 from manta_client.base.setting import Settings
