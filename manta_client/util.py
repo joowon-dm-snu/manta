@@ -50,10 +50,12 @@ def read_config_yaml(
 
 
 def save_yaml(path: Union[str, Path], info: Dict) -> None:
-    mkdir(Path(path).parent)
-
-    with open(path, "w") as f:
-        yaml.dump(info, f)
+    if mkdir(Path(path).parent):
+        with open(path, "w") as f:
+            yaml.dump(info, f)
+    else:
+        # TODO: (kjw) will be changed for error handling
+        print("mkdir failed")
 
 
 def to_dict(params):

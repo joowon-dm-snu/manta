@@ -53,14 +53,18 @@ class Config(object):
         self.update(conf_dict)
 
     def _assert_dict_values(self, v: Any) -> None:
+        """Config will be sent to server with json formats
+        all values should be real values for avoid unintended changes
+        """
         return True
 
-    # TODO: consider we need sanitize
+    # TODO: add documentations
     def _sanitize(self, k: str, v: Any) -> Tuple:
         k = k.rstrip("_|-")
         v = util.json_value_sanitize(v)
         return k, v
 
+    # TODO: add documentations
     def _sanitize_dict(self, config_dict: Dict) -> Dict:
         sanitized = {}
         self._assert_dict_values(config_dict)
