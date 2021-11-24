@@ -1,27 +1,21 @@
-from setuptools import setup
-
-with open("package_readme.md") as file:
-    long_description = file.read()
+from setuptools import setup, find_packages
 
 with open("requirements.txt") as file:
     requirements = file.read().splitlines()
 
 setup(
-    name="mant-client",
+    name="manta-client",
     version="0.1.0",
-    description="A CLI and library for interacting with the Manta Engine.", # TODO: (kjw) need change
+    description="A CLI and library for interacting with the Manta Engine.", 
     author="coxwave",
     author_email="support@manta.coxwave.com",
     url="https://github.com/coxwave/manta",
     download_url="https://github.com/coxwave/manta",
     license="MIT license",
-    packages=["manta"],  # TODO: (kjw) need change
-    package_dir={"manta": "manta"},  # TODO: (kjw) need change
-    long_description=long_description,
-    long_description_content_type="text/markdown",
+    packages=find_packages(), # TODO: (kjw) need change to packages & packages_dir
     include_package_data=True,
     zip_safe=False,
-    keywords=["deep learning", "logging", "automation", "AI"], # TODO: (kjw) need change
+    keywords=["deep learning", "logging", "tracking", "automation", "AI"], 
     python_requires=">=3.6",
     setup_requires=[],
     install_requires=requirements,
@@ -33,7 +27,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "manta=manta.cli.cli:cli",  # TODO: (kjw) need change
+            "manta=manta_client.cli.entry:cli",  # TODO: (kjw) need change
         ]
     },
     classifiers=[
