@@ -1,8 +1,10 @@
 import argparse
 import os
-import yaml
 from pathlib import Path
 from typing import Any, Dict, Union
+
+import shortuuid
+import yaml
 
 from manta_client.errors import Error
 
@@ -30,9 +32,7 @@ def read_yaml(path: Union[str, Path], encoding="utf-8") -> Dict:
     return result
 
 
-def read_config_yaml(
-    path: Union[str, Path] = None, data: Dict = None, keyname: str = "value"
-) -> Dict:
+def read_config_yaml(path: Union[str, Path] = None, data: Dict = None, keyname: str = "value") -> Dict:
     if path and data is None:
         data = read_yaml(path)
     elif path is None and data:
@@ -74,3 +74,8 @@ def to_dict(params):
 def json_value_sanitize(value):
     # TODO: tensor values will be change to float here
     return value
+
+
+def generate_id(length=10):
+    run_gen = shortuuid.ShortUUID(alphabet=list("0123456789abcdefghijklmnopqrstuvwxyz"))
+    return run_gen.random(length)

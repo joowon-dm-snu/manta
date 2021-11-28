@@ -18,9 +18,9 @@ from typing import (
     Union,
 )
 
-from manta_client.errors import Error
+from manta_client.errors import Error  # noqa
 
-settings_defaults = dict(base_url="https://mvp.coxwave.com/api")
+settings_defaults = dict(base_url="https://mvp-dev.coxwave.com/api/")
 
 ENV_PREFIX = "MANTA_"
 
@@ -57,6 +57,7 @@ class Settings(object):
         base_url: str = None,
         api_key: str = None,
         entity: str = None,
+        team_name: str = None,
         project: str = None,
         experiment_id: str = None,
         _start_time: int = None,
@@ -69,6 +70,7 @@ class Settings(object):
         object.__setattr__(self, "_Settings__frozen", False)
         object.__setattr__(self, "_Settings__source_info", dict())
         self._update(kwargs, _source=self.UpdateSource.SETTINGS)
+        self.update_defaults()
 
     def __copy__(self) -> "Settings":
         s = Settings()
@@ -90,9 +92,7 @@ class Settings(object):
             return False
         return True
 
-    def _update(
-        self, data: Dict[str, Any] = None, _source: Optional[int] = None, **kwargs: Any
-    ) -> None:
+    def _update(self, data: Dict[str, Any] = None, _source: Optional[int] = None, **kwargs: Any) -> None:
         if self.__frozen:
             raise TypeError("Settings object is frozen")
 
