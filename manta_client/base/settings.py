@@ -20,7 +20,7 @@ from typing import (
 
 from manta_client.errors import Error  # noqa
 
-settings_defaults = dict(base_url="https://mvp-dev.coxwave.com/api/")
+settings_defaults = dict(base_url="https://mvp-dev.coxwave.com/api/", mode="online")
 
 ENV_PREFIX = "MANTA_"
 
@@ -56,10 +56,16 @@ class Settings(object):
         self,
         base_url: str = None,
         api_key: str = None,
+        mode: str = None,
         entity: str = None,
         team_name: str = None,
         project: str = None,
-        experiment_id: str = None,
+        experiment: str = None,
+        notes: str = None,
+        tags: List[str] = None,
+        artfiact_dir: str = None,
+        save_code: bool = None,
+        config_paths: str = None,
         _start_time: int = None,
         **kwargs,
     ) -> None:
@@ -126,13 +132,21 @@ class Settings(object):
         # TODO: (kjw) add logic for env key to usable key
         data = dict()
         for k, v in environ.items():
-            data[k.replace(ENV_PREFIX, "").lower()] = v
+            if k.startswith(ENV_PREFIX):
+                data[k.replace(ENV_PREFIX, "").lower()] = v
         self._update(data, _source=self.UpdateSource.ENV)
+
+    def update_sys_configs(self) -> None:
+        # TODO: (kjw) update configs from manta base dir & curdir
+        pass
 
     def update_settings(self, settings: "Settings") -> None:
         for k in settings._public_keys():
             source = settings.__source_info.get(k)
             self._update({k: settings[k]}, _source=source)
+
+    def update_init(self, kwargs) -> None:
+        self._update(kwargs, _source=self.UpdateSource.INIT)
 
     def keys(self) -> Iterable[str]:
         return itertools.chain(self._public_keys(), self._property_keys())
@@ -164,3 +178,10 @@ class Settings(object):
 
     def is_frozen(self):
         return self.__frozen
+
+    @property
+    def _offline(self) -> bool:
+        res = False
+        if self.mode == "offline":
+            res = True
+        return res
