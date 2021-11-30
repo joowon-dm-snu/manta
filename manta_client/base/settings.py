@@ -2,6 +2,7 @@ import copy
 import enum
 import itertools
 import os
+import time
 from typing import (
     Any,
     Callable,
@@ -20,9 +21,16 @@ from typing import (
 
 from manta_client.errors import Error  # noqa
 
-settings_defaults = dict(base_url="https://mvp-dev.coxwave.com/api/", mode="online")
+settings_defaults = dict(base_url="https://mvp-dev.coxwave.com/api/", mode="online", silent=False)
 
 ENV_PREFIX = "MANTA_"
+
+KEY_MAPPER = {
+    "id": "experiment_id",
+    "name": "experiment_name",
+    "tags": "experiment_tags",
+    "notes": "experiment_notes",
+}
 
 
 class Settings(object):
@@ -60,15 +68,23 @@ class Settings(object):
         entity: str = None,
         team_name: str = None,
         project: str = None,
-        experiment: str = None,
-        notes: str = None,
-        tags: List[str] = None,
+        experiment_id: str = None,
+        experiment_name: str = None,
+        experiment_notes: str = None,
+        experiment_tags: List[str] = None,
+        group: str = None,
+        job_type: str = None,
         artfiact_dir: str = None,
         save_code: bool = None,
         config_paths: str = None,
+        silent: bool = None,
         _start_time: int = None,
         **kwargs,
     ) -> None:
+        """
+        mode: online, offline, disable
+
+        """
         kwargs = dict(locals())
         kwargs.pop("self")
         self.__dict__.update({k: None for k in kwargs})
@@ -129,11 +145,14 @@ class Settings(object):
 
     def update_envs(self, environ: os._Environ) -> None:
         """ """
-        # TODO: (kjw) add logic for env key to usable key
+        # TODO:(kjw) add logic for env key to usable key
+        # TODO:(kjw) split tags to tuple
         data = dict()
         for k, v in environ.items():
             if k.startswith(ENV_PREFIX):
-                data[k.replace(ENV_PREFIX, "").lower()] = v
+                k = k.replace(ENV_PREFIX, "").lower()
+                k = KEY_MAPPER.get(k, k)
+                data[k] = v
         self._update(data, _source=self.UpdateSource.ENV)
 
     def update_sys_configs(self) -> None:
@@ -146,7 +165,14 @@ class Settings(object):
             self._update({k: settings[k]}, _source=source)
 
     def update_init(self, kwargs) -> None:
-        self._update(kwargs, _source=self.UpdateSource.INIT)
+        converted = dict()
+        for k, v in kwargs.items():
+            converted[KEY_MAPPER.get(k, k)] = v
+        self._update(converted, _source=self.UpdateSource.INIT)
+
+    def update_times(self) -> None:
+        timestamp = int(time.time() * 1000)
+        self._update({"_start_time": timestamp}, _source=self.UpdateSource.INIT)
 
     def keys(self) -> Iterable[str]:
         return itertools.chain(self._public_keys(), self._property_keys())
@@ -180,8 +206,21 @@ class Settings(object):
         return self.__frozen
 
     @property
+    def _disabled(self) -> bool:
+        """
+        disable all functionalities include offline saving
+        """
+        return self.mode == "disable"
+
+    @property
     def _offline(self) -> bool:
-        res = False
-        if self.mode == "offline":
-            res = True
-        return res
+        """
+        mode == offline will do logging process and save them at local.
+        that can be synchronized later if user wants with internet connections
+        """
+        # be aware settings has disabled property
+        return self.mode in ("disable", "offline")
+
+    @property
+    def experiemnt_dir(self) -> str:
+        return "path/to/somewhere"
