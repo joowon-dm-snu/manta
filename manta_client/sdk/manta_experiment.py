@@ -29,7 +29,7 @@ class Experiment(object):
         self._project = None
         self._id = settings.experiment_id
         self._name = None
-        self._notes = None
+        self._memo = None
         self._tags = None
         self._group = None
         self._job_type = None
@@ -89,13 +89,13 @@ class Experiment(object):
         return self._settings.experiment_name
 
     @property
-    def notes(self) -> str:
-        return self._notes
+    def memo(self) -> str:
+        return self._memo
 
-    @notes.setter
-    def notes(self, notes: str) -> None:
-        self._notes = notes
-        # TODO: notify to server notes is changed
+    @memo.setter
+    def memo(self, memo: str) -> None:
+        self._memo = memo
+        # TODO: notify to server memo is changed
 
     @property
     def group(self) -> str:

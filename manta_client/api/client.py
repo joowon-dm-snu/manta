@@ -1,4 +1,6 @@
+import json
 import time
+from typing import Dict
 
 import requests
 
@@ -51,11 +53,11 @@ class _BaseClient(object):
         req_func = getattr(self._client, request_type)
 
         url = self.base_url + endpoint
-        if request_type == 'get':
+        if request_type == "get":
             res = req_func(url, params=kwargs)
-        else: 
+        else:
             res = req_func(url, data=kwargs)
-        return res.json()
+        return res
 
 
 class MantaClient:
@@ -70,8 +72,13 @@ class MantaClient:
 
         self._client = _BaseClient(self._settings, timeout=timeout)
 
-    def request(self, request_type, endpoint, params=None):
+    @property
+    def base_url(self):
+        return self._client.base_url
+
+    def request(self, request_type, endpoint, params=None) -> requests.Response:
         """TODO: retrying request implementation"""
+        # TODO: raise error if response is 4xx 5xx
         return self._client.request(request_type, endpoint, kwargs=params)
         while True:
             try:
@@ -82,6 +89,16 @@ class MantaClient:
 
             time.sleep(1.5)
             break
+
+    def request_json(self, request_type, endpoint, params=None) -> Dict:
+        kwargs = locals()
+        kwargs.pop("self")
+        res = self.request(**kwargs)
+
+        try:
+            return res.json()
+        except json.JSONDecodeError:
+            return res.text
 
 
 if __name__ == "__main__":

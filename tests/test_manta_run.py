@@ -21,14 +21,14 @@ def test_experiment_name(experiment):
     assert experiment.name == "experimentname"
 
 
-@pytest.mark.manta_args(env={"MANTA_NOTES": "test notes"})
-def test_experiment_notes(experiment):
-    assert experiment.notes == "test notes"
+@pytest.mark.manta_args(env={"MANTA_MEMO": "test memo"})
+def test_experiment_memo(experiment):
+    assert experiment.memo == "test memo"
 
 
-def test_experiment_setnotes(experiment):
-    experiment.notes = "test notes"
-    assert experiment.notes == "test notes"
+def test_experiment_setmemo(experiment):
+    experiment.memo = "test memo"
+    assert experiment.memo == "test memo"
 
 
 @pytest.mark.manta_args(env={"MANTA_TAGS": "test-tag1, test-tag2"})
