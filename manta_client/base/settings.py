@@ -29,7 +29,7 @@ KEY_MAPPER = {
     "id": "experiment_id",
     "name": "experiment_name",
     "tags": "experiment_tags",
-    "notes": "experiment_notes",
+    "memo": "experiment_memo",
 }
 
 
