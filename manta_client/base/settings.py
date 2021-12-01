@@ -70,7 +70,7 @@ class Settings(object):
         project: str = None,
         experiment_id: str = None,
         experiment_name: str = None,
-        experiment_notes: str = None,
+        experiment_memo: str = None,
         experiment_tags: List[str] = None,
         group: str = None,
         job_type: str = None,

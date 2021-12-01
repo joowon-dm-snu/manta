@@ -79,7 +79,7 @@ class _MantaInitiator(object):
         # TODO: (kjw) priority of server settings need to be reviewed. (vs init kwargs)
         self._setup_server_settings(settings=settings)
 
-        # working_dir, entity, project, experiment, tags, notes, save_code
+        # working_dir, entity, project, experiment, tags, memo, save_code
         settings.update_init(kwargs)
 
         # make dirs & init log files
@@ -139,7 +139,7 @@ def init(
     id: Optional[str] = None,
     name: Optional[str] = None,
     tags: Optional[Sequence] = None,
-    notes: Optional[str] = None,
+    memo: Optional[str] = None,
     save_code=None,
     settings: Union[Settings, Dict[str, Any], None] = None,
 ) -> Union[Experiment, None]:
@@ -150,7 +150,7 @@ def init(
     project: project name
     experiment: experiment name
     tags: tags
-    notes: long description
+    memo: long description
     save_code: not yet
     """
     kwargs = dict(locals())

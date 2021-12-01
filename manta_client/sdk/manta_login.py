@@ -25,11 +25,11 @@ class _MantaLogin(object):
 
 
 def login(
-    api_key: str = None, base_url: str = None, settings: Settings = None, api: MantaAPI = None, silent: bool = None
+    api_key: str = None, base_url: str = None, settings: Settings = None, api: MantaAPI = None, silent: bool = False
 ):
     kwargs = dict(locals())
 
-    silent = kwargs.pop("silent", None)
+    silent = kwargs.pop("silent")
     _login = _MantaLogin(silent=silent)
     _login.setup(kwargs)
 

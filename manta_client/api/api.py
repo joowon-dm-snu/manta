@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import manta_client.env as env
 import manta_client.util as util
@@ -18,7 +18,10 @@ class MantaAPI(object):
         self._environ = environ or os.environ
 
         self._client = MantaClient(self._settings)
+        print(f"API connected to {self._client.base_url}")
         self._team_id = None
+        self._project_id = None
+        self._experiment_id = None
         self.setup()
 
     @property
@@ -31,18 +34,28 @@ class MantaAPI(object):
 
     @property
     def team_id(self):
-        # TODO: delete
-        return "2pWGwX1WgqTEVnvLax2K"
         return self._team_id
+
+    @team_id.setter
+    def team_id(self, team_id: str):
+        self._team_id = team_id
+
+    @property
+    def project_id(self):
+        return self._project_id
+
+    @property
+    def experiment_id(self):
+        #
+        return self._experiment_id or self._settings.experiment_id
 
     def setup(self):
         """
         Project creation need team_id, so set team id here
-        """
-        # teams are not working now, fix this later on
-        return "donghyung.ko"
 
-        # TODO: (kjw) fix profile ??
+        default team name == my name
+        """
+        return 1  # TODO: pending for Personal team decision
         team_name = self._settings.team_name or self.profile()["name"]
 
         for team in self.teams():
@@ -54,73 +67,134 @@ class MantaAPI(object):
         self._settings.team = team_name
 
     def profile(self):
-        return self.client.request("get", "user/profile")
+        return self.client.request_json("get", "user/profile")
 
     def teams(self):
-        return self.client.request("get", "team/my")
+        return self.client.request_json("get", "team/my")["teams"]
 
-    def team_detail(self, team_id: str = None):
+    def get_team(self, team_id: str = None) -> Dict:
         team_id = team_id or self.team_id
-        return self.client.request("get", f"team/{team_id}")
+        return self.client.request_json("get", f"team/{team_id}")
+
+    def create_team(self, name: str) -> str:
+        kwargs = dict(name=name)
+        res = self.client.request_json("post", "team", kwargs)
+        self._team_id = res["Id"]
+        return res
+
+    def delete_team(self, team_id: str) -> None:
+        self.client.request_json("delete", f"team/{team_id}")
+
+    def get_team_by_name(self, name: str):
+        """
+        Return team id
+        """
+
+        for team in self.teams():
+            if name == team["name"]:
+                return team["Id"]
+        return None
 
     def create_project(
-        self, name: str, description: str, thumbnail: Optional[str] = None, tags: Optional[List[str]] = None
+        self,
+        name: str,
+        description: Optional[str] = None,
+        thumbnail: Optional[str] = None,
+        tags: Optional[List[str]] = None,
     ):
         """
         Return upsert project
         """
+        description = description or " "  # TODO: API will change it to optional later, delete here
         kwargs = locals()
         kwargs.pop("self")
-        return self.client.request("post", f"team/{self.team_id}/project", kwargs)
+        res = self.client.request_json("post", f"team/{self.team_id}/project", kwargs)
+        self._project_id = res["Id"]
+        return self._project_id
 
     def projects(self, team_id: str = None) -> List[Dict[str, Any]]:
         """
         Return projects list
         """
         team_id = team_id or self.team_id
-        return self.client.request("get", f"team/{team_id}/project/my")
+        return self.client.request_json("get", f"team/{team_id}/project/my")
 
-    def get_project(self, project_id: str):
+    def get_project(self, project_id: str = None):
         """
         Return project detail
         """
-        return self.client.request("get", f"project/{project_id}")
+        project_id = project_id or self.project_id
+        return self.client.request_json("get", f"project/{project_id}")
+
+    def get_project_by_name(self, name: str):
+        """
+        Return project detail
+        """
+
+        for project in self.projects():
+            if name == project["name"]:
+                return project["Id"]
+        return None
 
     def delete_project(self, project_id: str):
         """
         Return delete project
         """
-        return self.client.request(
+        return self.client.request_json(
             "delete",
             f"project/{project_id}",
         )
 
-    def experiments(self, project_id: str):
+    def experiments(self, project_id: str = None):
         """
         Return experiments list
         """
-        return self.client.request("get", f"project/{project_id}/experiment")
+        project_id = project_id or self.project_id
+        return self.client.request_json("get", f"project/{project_id}/experiment")
 
-    def get_experiment(self, project_id: str, experiment_id: str):
+    def get_experiment(self, experiment_id: str = None):
         """
         Return experiment detail
         """
-        return self.client.request("get", f"project/{project_id}/experiment/{experiment_id}")
+        experiment_id = experiment_id or self.experiment_id
 
-    def create_experiment(self, project_id, name: str = None):
+        return self.client.request_json("get", f"experiment/{experiment_id}")
+
+    def create_experiment(
+        self,
+        project_id: str = None,
+        name: str = None,
+        memo: str = None,
+        config: Dict = None,
+        metadata: Dict = None,
+        hyperparameter: Dict = None,
+        tags: Sequence = None,
+    ):
         """
         Return experiment upsert
         """
+        project_id = project_id or self.project_id
         name = name or util.generate_id()
+
         kwargs = locals()
         kwargs.pop("self")
-        return self.client.request("post", f"project/{project_id}/experiment", kwargs)
+        res = self.client.request_json("post", f"project/{project_id}/experiment", kwargs)
+        self._experiment_id = res["Id"]
+        return self._experiment_id
 
     def delete_experiment(self, *args, **kwargs):
         """
         Return experiment delete
         """
         return {}
+
+    def send_experiment_record(self, histories: List[Dict] = None, systems: List[Dict] = None, logs: List[Dict] = None):
+        kwargs = dict()
+        for k, v in locals().items():
+            if k == "self":
+                continue
+            kwargs[k] = v
+        return self.client.request_json("post", f"experiment/{self.experiment_id}/record", kwargs)
 
     def artifacts(self, *args, **kwargs):
         """
@@ -189,22 +263,3 @@ class MantaAPI(object):
         Return report delete
         """
         return {}
-
-
-if __name__ == "__main__":
-    from pprint import pprint
-
-    from manta_client.base.settings import Settings
-
-    s = Settings(api_key="EmTes.585ReFy4pI40i5")
-    api = MantaAPI(s)
-    #
-    # print(api.profile())
-    # print(api.team_detail())
-    # print(api.create_project("test2", "project"))
-    pprint(api.projects())
-    pprint(api.teams())
-    print(api.get_project("yeERJmLWXZHzN02vErq9"))
-    print(api.create_experiment("yeERJmLWXZHzN02vErq9", name="test-experiment"))
-    print(api.create_experiment("yeERJmLWXZHzN02vErq9"))
-    print(api.experiments("yeERJmLWXZHzN02vErq9"))
