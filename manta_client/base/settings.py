@@ -143,10 +143,12 @@ class Settings(object):
         defaults = defaults or settings_defaults
         self._update(defaults, _source=self.UpdateSource.BASE)
 
-    def update_envs(self, environ: os._Environ) -> None:
+    def update_envs(self, environ: os._Environ = None) -> None:
         """ """
         # TODO:(kjw) add logic for env key to usable key
         # TODO:(kjw) split tags to tuple
+
+        environ = environ or os.environ
         data = dict()
         for k, v in environ.items():
             if k.startswith(ENV_PREFIX):
@@ -224,3 +226,10 @@ class Settings(object):
     @property
     def experiemnt_dir(self) -> str:
         return "path/to/somewhere"
+
+
+if __name__ == "__main__":
+    s = Settings()
+    s.update_envs()
+
+    s.api_key

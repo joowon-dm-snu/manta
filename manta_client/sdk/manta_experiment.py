@@ -1,3 +1,4 @@
+import time
 from typing import Any, Dict, Optional, Sequence
 
 from manta_client import Settings
@@ -19,6 +20,7 @@ class Experiment(object):
         self._settings.update_times()
 
         self.history = History(self)
+        self.history.set_callback(self._history_callback)
 
         # by set functions
         self._backend = None
@@ -33,6 +35,7 @@ class Experiment(object):
         self._tags = None
         self._group = None
         self._job_type = None
+        self._start_time = time.time()  # TODO: history start time? settings start time?
 
         # process admin
         self._process_admin = ProcessStatusAdmin()
@@ -59,6 +62,10 @@ class Experiment(object):
 
     def set_observers(self, observer):
         self._observers = observer
+
+    def _history_callback(self, row, step):
+        if self._backend and self._backend.interface:
+            self._backend.interface.publish_history(row, step)
 
     @property
     def entity(self) -> str:

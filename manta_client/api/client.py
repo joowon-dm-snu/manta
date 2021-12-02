@@ -47,6 +47,14 @@ class _BaseClient(object):
         return self._client.delete(endpoint)
 
     def request(self, request_type, endpoint, kwargs=None):
+        _kwargs = dict()
+        if kwargs:
+            kwargs.pop("self", None)
+            for k, v in kwargs.items():
+                if v:
+                    _kwargs[k] = v
+        kwargs = _kwargs
+
         if request_type not in ["get", "post", "patch", "delete"]:
             raise AttributeError("wrong request_type")
 
@@ -56,7 +64,7 @@ class _BaseClient(object):
         if request_type == "get":
             res = req_func(url, params=kwargs)
         else:
-            res = req_func(url, data=kwargs)
+            res = req_func(url, json=kwargs)
         return res
 
 
