@@ -2,17 +2,57 @@ from typing import Optional
 
 import manta_client.base.packet as pkt
 
-from ..manta_experiment import Experiment
+
+def packet_to_json(packet):
+    pass
+
+
+class RouteManager:
+    def __init__(self, api):
+        self._api = api
+        self.fs = FileStreamer(self._api)
+        self.sm = SendManager(self.fs)
+
+    def route_history(self, data):
+        self.sm.send_history(data)
+
+
+class SendManager:
+    def __init__(self, fs):
+        self.fs = fs
+
+    def send_history(self, history):
+        self.fs.push("manta_history", history)
+
+
+class FileStreamer:
+    def __init__(self, api):
+        self.api = api
+        self.buffer = {"manta_history": []}
+
+        self.cnt = 0
+
+    def body(self, file):
+        if self.cnt >= 5:
+            self.api.send_experiment_record(self.buffer[file])
+            self.buffer[file] = []
+            self.cnt = 0
+
+    def push(self, file, data):
+        self.buffer[file].append(data)
+        self.cnt += 1
+
+        self.body(file)
 
 
 class Interface(object):
-    def __init__(self, experiment: Optional[Experiment] = None):
-        self._buffer = []  # TODO: refactor here, this is temporal implementation
-        self._experiment = experiment
+    def __init__(self, api):
+        self._api = api
+        self._router = RouteManager(self._api)  # TODO: remove direct router access. will be replaced to queue
 
-    def set_experiment(self, experiment: Experiment):
-        self._experiment = experiment
-        self._api = experiment._api
+    def _make_packet(self, packet):
+        p = pkt.Packet.init_from(packet)
+        return p
 
     def _publish(self, packet: pkt.Packet) -> None:
         # TODO: for offline mode, need to set save = True
@@ -20,20 +60,9 @@ class Interface(object):
         return True
 
     def _publish_history(self, history: pkt.HistoryPacket) -> None:
-        rec = self._make_packet(history=history)
-        self._publish(rec)
-        self._api.send_record()
+        packet = self._make_packet(history)
+        self._router.route_history(history)
+        # self._publish(packet)
 
     def publish_history(self, data: dict, step: int = None):
-        run = run or self._run
-        data = data_types.history_dict_to_json(run, data, step=step)
-        history = pb.HistoryPacket()
-        if publish_step:
-            assert step is not None
-            history.step.num = step
-        data.pop("_step", None)
-        for k, v in six.iteritems(data):
-            item = history.item.add()
-            item.key = k
-            item.value_json = json_dumps_safer_history(v)  # type: ignore
-        self._publish_history(history)
+        self._publish_history({"step": step, "item": data})
