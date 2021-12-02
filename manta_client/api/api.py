@@ -77,10 +77,10 @@ class MantaAPI(object):
         return self.client.request_json("get", f"team/{team_id}")
 
     def create_team(self, name: str) -> str:
-        kwargs = dict(name=name)
-        res = self.client.request_json("post", "team", kwargs)
-        self._team_id = res["Id"]
-        return res
+        kwargs = dict(uid=name)
+        id = self.client.request_json("post", "team", kwargs)["Id"]
+        self._team_id = id
+        return id
 
     def delete_team(self, team_id: str) -> None:
         self.client.request_json("delete", f"team/{team_id}")
@@ -107,7 +107,6 @@ class MantaAPI(object):
         """
         description = description or " "  # TODO: API will change it to optional later, delete here
         kwargs = locals()
-        kwargs.pop("self")
         res = self.client.request_json("post", f"team/{self.team_id}/project", kwargs)
         self._project_id = res["Id"]
         return self._project_id
@@ -117,7 +116,7 @@ class MantaAPI(object):
         Return projects list
         """
         team_id = team_id or self.team_id
-        return self.client.request_json("get", f"team/{team_id}/project/my")
+        return self.client.request_json("get", f"team/{team_id}/project/my")["projects"]
 
     def get_project(self, project_id: str = None):
         """
@@ -150,7 +149,7 @@ class MantaAPI(object):
         Return experiments list
         """
         project_id = project_id or self.project_id
-        return self.client.request_json("get", f"project/{project_id}/experiment")
+        return self.client.request_json("get", f"project/{project_id}/experiment")["experiments"]
 
     def get_experiment(self, experiment_id: str = None):
         """
@@ -162,7 +161,6 @@ class MantaAPI(object):
 
     def create_experiment(
         self,
-        project_id: str = None,
         name: str = None,
         memo: str = None,
         config: Dict = None,
@@ -173,11 +171,10 @@ class MantaAPI(object):
         """
         Return experiment upsert
         """
-        project_id = project_id or self.project_id
+        project_id = self.project_id
         name = name or util.generate_id()
 
         kwargs = locals()
-        kwargs.pop("self")
         res = self.client.request_json("post", f"project/{project_id}/experiment", kwargs)
         self._experiment_id = res["Id"]
         return self._experiment_id
@@ -189,11 +186,7 @@ class MantaAPI(object):
         return {}
 
     def send_experiment_record(self, histories: List[Dict] = None, systems: List[Dict] = None, logs: List[Dict] = None):
-        kwargs = dict()
-        for k, v in locals().items():
-            if k == "self":
-                continue
-            kwargs[k] = v
+        kwargs = locals()
         return self.client.request_json("post", f"experiment/{self.experiment_id}/record", kwargs)
 
     def artifacts(self, *args, **kwargs):
