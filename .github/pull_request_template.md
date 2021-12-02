@@ -1,11 +1,8 @@
 <!---
-feature title for abstract: [Feature][Abstract]: <pull_request name>: <pull_request name> 
+feature title for abstract: [Feature][Abstract]: <pull_request name>
 featrue title for implementatoin: [Feature][Implementation]: <pull_request name>
----!>
 
-<!--- 
-We really appreciate your contribution. 
-Thank you so much in advance
+We really appreciate your contribution. Thank you so much in advance :)
 -->
 
 ### 🚀  Related Issue
