@@ -3,10 +3,11 @@ from typing import Any, Dict, Optional, Sequence
 
 from manta_client import Settings
 
+from .internal.console import ConsoleSync
 from .manta_history import History
 
 
-class ProcessStatusAdmin(object):
+class ProcessController(object):
     pass
 
 
@@ -18,9 +19,6 @@ class Experiment(object):
         self._config = config
         self._settings = settings
         self._settings.update_times()
-
-        self.history = History(self)
-        self.history.set_callback(self._history_callback)
 
         # by set functions
         self._backend = None
@@ -37,8 +35,10 @@ class Experiment(object):
         self._job_type = None
         self._start_time = time.time()  # TODO: history start time? settings start time?
 
-        # process admin
-        self._process_admin = ProcessStatusAdmin()
+        # initiated at on_start
+        self.history = None
+        self.console = None
+        self._controller = None
         self._setup_from_settings(settings)
 
     def _setup_from_settings(self, settings):
@@ -66,6 +66,10 @@ class Experiment(object):
     def _history_callback(self, row, step):
         if self._backend and self._backend.interface:
             self._backend.interface.publish_history(row, step)
+
+    def _console_callback(self, name, data):
+        if self._backend and self._backend.interface:
+            self._backend.interface.publish_console(name, data)
 
     @property
     def entity(self) -> str:
@@ -128,5 +132,36 @@ class Experiment(object):
     def start_time(self) -> int:
         return self._start_time
 
+    def on_start(self):
+        pass
+
+    def on_init(self):
+        # TODO: log codes
+        self._save_codes()
+        # TODO: show exp info
+        self._display()
+
+        self._controller = ProcessController()
+        self.history = History(self)
+        self.history.set_callback(self._history_callback)
+        self._console_start()
+
     def log(self, data: Dict[str, Any]):
         self.history._row_update(data)
+
+    def _save_code(self):
+        # TODO: Do this on meta save?
+        pass
+
+    def _display(self):
+        # TODO: show experiment information
+        pass
+
+    def _console_start(self):
+        # sync option = REDIRECT, WRAP, OFF
+        self.console = ConsoleSync(self)
+        self.console.set_callback(self._console_callback)
+        self.console.sync(option="redirect")
+
+    def _console_stop(self):
+        self.console.stop()

@@ -16,6 +16,10 @@ from manta_client.sdk.interface.interface import Interface
 DEBOUNCE_SECONDS = 2
 FLUSHING_SAMPLE_COUNTS = 5
 
+"""
+TODO: how about initiating systemstat in experiment somewhere like on_init
+"""
+
 
 class SystemStat(object):
     def __init__(self, interface: Interface, pid: int = None, method: str = "mean") -> None:
@@ -56,8 +60,7 @@ class SystemStat(object):
                 samples = list(self._buffer.get(stat, [value]))
                 stats[stat] = round(sum(samples) / len(samples), 2)
 
-        print(stats)
-        # self._interface.publish_stats(stats)
+        self._interface.publish_stats(stats)
         self._sample_counts = 0
         self._buffer = {}
 
