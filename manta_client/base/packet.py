@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 """
 Packet & Result: Can be saved for offline or user wants
@@ -29,6 +29,19 @@ class HistoryItem:
 @dataclass
 class HistoryPacket:
     item: HistoryItem
+    step: int
+
+
+@dataclass
+class StatsItem:
+    key: str
+    value: Dict
+
+
+@dataclass
+class StatsPacket:
+    item: StatsItem
+    timestamp: int
     step: int
 
 

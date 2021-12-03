@@ -16,33 +16,39 @@ class RouteManager:
     def route_history(self, data):
         self.sm.send_history(data)
 
+    def route_history(self, data):
+        self.sm.send_stats(data)
+
 
 class SendManager:
     def __init__(self, fs):
         self.fs = fs
 
     def send_history(self, history):
-        self.fs.push("manta_history", history)
+        self.fs.push("histories", history)
+
+    def send_stats(self, stats):
+        self.fs.push("systems", stats)
 
 
 class FileStreamer:
     def __init__(self, api):
         self.api = api
-        self.buffer = {"manta_history": []}
+        self.buffer = dict()
 
-        self.cnt = 0
+        self._cnt = 0
 
-    def body(self, file):
-        if self.cnt >= 5:
-            self.api.send_experiment_record(self.buffer[file])
-            self.buffer[file] = []
-            self.cnt = 0
+    def body(self):
+        if self._cnt >= 5:
+            self.api.send_experiment_record(**self.buffer)
+            self.buffer = dict()
+            self._cnt = 0
 
     def push(self, file, data):
         self.buffer[file].append(data)
-        self.cnt += 1
+        self._cnt += 1
 
-        self.body(file)
+        self.body()
 
 
 class Interface(object):
@@ -66,3 +72,12 @@ class Interface(object):
 
     def publish_history(self, data: dict, step: int = None):
         self._publish_history({"step": step, "item": data})
+
+    def _publish_stats(self, stats: pkt.StatsPacket) -> None:
+        packet = self._make_packet(stats)
+        self._router.route_stats(stats)
+        # self._publish(packet)
+
+    def publish_stats(self, data: dict):
+        # TODO: sync step with history
+        self._publish_stats({"item": data})
