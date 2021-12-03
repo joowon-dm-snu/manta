@@ -19,6 +19,9 @@ class RouteManager:
     def route_history(self, data):
         self.sm.send_stats(data)
 
+    def route_console(self, data):
+        self.sm.send_console(data)
+
 
 class SendManager:
     def __init__(self, fs):
@@ -29,6 +32,9 @@ class SendManager:
 
     def send_stats(self, stats):
         self.fs.push("systems", stats)
+
+    def send_console(self, console):
+        self.fs.push("logs", console)
 
 
 class FileStreamer:
@@ -81,3 +87,12 @@ class Interface(object):
     def publish_stats(self, data: dict):
         # TODO: sync step with history
         self._publish_stats({"item": data})
+
+    def _publish_console(self, console: pkt.ConsolePacket) -> None:
+        packet = self._make_packet(console)
+        self._router.route_console(console)
+        # self._publish(packet)
+
+    def publish_console(self, data: dict):
+        # TODO: sync step with history
+        self._publish_console({"item": data})
