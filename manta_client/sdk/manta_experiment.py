@@ -2,6 +2,7 @@ import time
 from typing import Any, Dict, Optional, Sequence
 
 from manta_client import Settings
+from manta_client.base.packet import ExperimentPacket
 
 from .internal.console import ConsoleSync
 from .manta_history import History
@@ -52,6 +53,21 @@ class Experiment(object):
                 setattr(self, f"_{k}", v)
             except KeyError:
                 pass
+
+    def _setup_from_packet(self, pkt: ExperimentPacket) -> None:
+        self._packet = pkt
+        self._entity = pkt.entity
+        self._project = pkt.project
+        # TODO: add config, meta, history ...
+
+    def _setup_packet_offline(self, pkt: ExperimentPacket) -> None:
+        self._packet = pkt
+
+    def _as_packet(self, pkt: ExperimentPacket) -> None:
+        # TODO: iterate experiment properties for copying
+        for k, v in self.__dict__.items():
+            # TODO: Add try/except
+            pkt[k] = v
 
     def set_api(self, api):
         # TODO: merge into set_backend?

@@ -1,16 +1,30 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import manta_client.base.packet as pkt
+from manta_client import Settings
+
+from ..manta_experiment import Experiment
+
+"""
+Interface -> Handler -> Store(Future Implement) -> Sender -> ApiStreamer
+
+Interface: create packets, pass it to handler
+Handler: handle packets, execute complex logics 
+Sender: send packets or request to server 
+"""
 
 
 def packet_to_json(packet):
     pass
 
 
+# TODO: split classes to internal files
+
+
 class RouteManager:
     def __init__(self, api):
         self._api = api
-        self.fs = FileStreamer(self._api)
+        self.fs = ApiStreamer(self._api)
         self.sm = SendManager(self.fs)
 
     def route_history(self, data):
@@ -37,7 +51,7 @@ class SendManager:
         self.fs.push("logs", console)
 
 
-class FileStreamer:
+class ApiStreamer:
     def __init__(self, api):
         self.api = api
         self.buffer = dict()
@@ -65,6 +79,27 @@ class Interface(object):
     def _make_packet(self, packet):
         p = pkt.Packet.init_from(packet)
         return p
+
+    def _make_artifact(self, artifact: Any) -> pkt.ArtifactPacket:
+        pass
+
+    def _make_artifact_manifest(self, manifest) -> pkt.ArtifactManifest:
+        pass
+
+    def _make_summary(self, summary: Any) -> pkt.SummaryPacket:
+        pass
+
+    def _make_experiment(self, exp: Experiment) -> pkt.ExperimentPacket:
+        pass
+
+    def _make_settings(self, settings: Settings) -> pkt.SettingsPacket:
+        pass
+
+    def _make_config(self, config: Dict) -> pkt.ConfigPacket:
+        pass
+
+    def _make_meta(self, meta: Dict) -> pkt.MetaPacket:
+        pass
 
     def _publish(self, packet: pkt.Packet) -> None:
         # TODO: for offline mode, need to set save = True
