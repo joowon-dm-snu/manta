@@ -19,6 +19,7 @@ from typing import (
     Union,
 )
 
+import manta_client as mc
 from manta_client.errors import Error  # noqa
 
 settings_defaults = dict(base_url="https://mvp-dev.coxwave.com/api/", mode="online", silent=False)
@@ -79,6 +80,10 @@ class Settings(object):
         config_paths: str = None,
         silent: bool = None,
         _start_time: int = None,
+        _disable_stats: bool = False,
+        _disable_meta: bool = False,
+        root_dir: str = None,
+        experiment_base_dir: str = "{manta_dir}/{experiment_mode}-{timestamp}-{run_id}/files",
         **kwargs,
     ) -> None:
         """
@@ -93,6 +98,8 @@ class Settings(object):
         object.__setattr__(self, "_Settings__source_info", dict())
         self._update(kwargs, _source=self.UpdateSource.SETTINGS)
         self.update_defaults()
+
+        self.root_dir = mc.env.get_manta_dir() or os.path.abspath(os.getcwd())
 
     def __copy__(self) -> "Settings":
         s = Settings()
@@ -225,7 +232,12 @@ class Settings(object):
 
     @property
     def experiemnt_dir(self) -> str:
-        return "path/to/somewhere"
+        return "./test-20211206-ttaadfdf1212/files"
+        return self.experiment_base_dir.format()
+
+    @property
+    def manta_files_dir(self):
+        pass
 
 
 if __name__ == "__main__":

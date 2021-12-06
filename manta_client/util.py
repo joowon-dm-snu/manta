@@ -17,7 +17,10 @@ def mkdir(path: Union[str, Path], exist_ok: bool = True) -> bool:
         print(exc)
         return False
 
-
+def parent_makedirs(path: Union[str, Path], exist_ok: bool = True) -> bool:
+    path = Path(path).parent
+    mkdir(path)
+    
 def read_yaml(path: Union[str, Path], encoding="utf-8") -> Dict:
     result = dict()
 

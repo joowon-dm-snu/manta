@@ -37,15 +37,8 @@ class Packet:
 
 
 @dataclass
-class _HistoryItem:
-    key: str
-    value: Union[str, int, float]
-
-
-@dataclass
 class HistoryPacket:
-    item: List[_HistoryItem]
-    step: int
+    item: Dict[str, Union[str, int, float]]
 
 
 @dataclass
