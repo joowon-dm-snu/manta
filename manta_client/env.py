@@ -7,6 +7,7 @@ HTTP_TIMEOUT = "MANTA_HTTP_TIMEOUT"
 BASE_DIR = "MANTA_BASE_DIR"
 CACHE_DIR = "MANTA_CACHE_DIR"
 API_KEY = "MANTA_API_KEY"
+MANTA_DIR = "MANTA_DIR"
 
 
 def env_as_bool(key, env=None):
@@ -39,6 +40,12 @@ def get_manta_cache_dir(env=None):
     return path
 
 
+def get_manta_dir(env=None):
+    if env is None:
+        env = os.environ
+    return env.get(MANTA_DIR, None)
+
+
 def get_api_key(host, env_first=True):
     """get api key from manta sysdir or env-vars
 
@@ -53,6 +60,6 @@ def get_api_key(host, env_first=True):
     key = None
 
     if env_first:
-        key = os.get(API_KEY, key)
+        key = os.environ.get(API_KEY, key)
 
     return key

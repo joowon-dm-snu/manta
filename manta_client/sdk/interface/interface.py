@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 import manta_client.base.packet as pkt
 from manta_client import Settings
 
-from ..manta_experiment import Experiment
+# from ..manta_experiment import Experiment
 
 """
 Interface -> Handler -> Store(Future Implement) -> Sender -> ApiStreamer
@@ -21,51 +21,65 @@ def packet_to_json(packet):
 # TODO: split classes to internal files
 
 
-class RouteManager:
+class HandleManager:
     def __init__(self, api):
         self._api = api
         self.fs = ApiStreamer(self._api)
         self.sm = SendManager(self.fs)
 
-    def route_history(self, data):
-        self.sm.send_history(data)
+    def handle_history(self, packet: pkt.Packet):
+        self.sm.send_history(packet)
 
-    def route_history(self, data):
-        self.sm.send_stats(data)
+    def handle_stats(self, packet: pkt.Packet):
+        self.sm.send_stats(packet)
 
-    def route_console(self, data):
-        self.sm.send_console(data)
+    def handle_console(self, packet: pkt.Packet):
+        self.sm.send_console(packet)
 
 
 class SendManager:
     def __init__(self, fs):
         self.fs = fs
 
-    def send_history(self, history):
+    def send_history(self, packet: pkt.Packet):
+        history = packet.history.item
         self.fs.push("histories", history)
 
-    def send_stats(self, stats):
+    def send_stats(self, packet: pkt.Packet):
+        # self._flatten(row)
+        # row["_wandb"] = True
+        # row["_timestamp"] = now
+        # row["_runtime"] = int(now - self._run.start_time.ToSeconds())
+        stats = packet.stats
         self.fs.push("systems", stats)
 
-    def send_console(self, console):
+    def send_console(self, packet: pkt.Packet):
+        console = packet.console
         self.fs.push("logs", console)
 
 
 class ApiStreamer:
     def __init__(self, api):
         self.api = api
-        self.buffer = dict()
+        self._buffer = None
+        self._cnt = 0
+        self._reset_buffer()
 
+    def _reset_buffer(self):
+        self._buffer = dict(
+            histories=[],
+            systems=[],
+            logs=[],
+        )
         self._cnt = 0
 
     def body(self):
         if self._cnt >= 5:
-            self.api.send_experiment_record(**self.buffer)
-            self.buffer = dict()
-            self._cnt = 0
+            self.api.send_experiment_record(**self._buffer)
+            self._reset_buffer()
 
     def push(self, file, data):
-        self.buffer[file].append(data)
+        self._buffer[file].append(data)
         self._cnt += 1
 
         self.body()
@@ -74,9 +88,9 @@ class ApiStreamer:
 class Interface(object):
     def __init__(self, api):
         self._api = api
-        self._router = RouteManager(self._api)  # TODO: remove direct router access. will be replaced to queue
+        self._handler = HandleManager(self._api)  # TODO: remove direct handler access. will be replaced to queue
 
-    def _make_packet(self, packet):
+    def _wrap_packet(self, packet):
         p = pkt.Packet.init_from(packet)
         return p
 
@@ -89,7 +103,7 @@ class Interface(object):
     def _make_summary(self, summary: Any) -> pkt.SummaryPacket:
         pass
 
-    def _make_experiment(self, exp: Experiment) -> pkt.ExperimentPacket:
+    def _make_experiment(self, exp: "Experiment") -> pkt.ExperimentPacket:
         pass
 
     def _make_settings(self, settings: Settings) -> pkt.SettingsPacket:
@@ -107,16 +121,17 @@ class Interface(object):
         return True
 
     def _publish_history(self, history: pkt.HistoryPacket) -> None:
-        packet = self._make_packet(history)
-        self._router.route_history(history)
+        packet = self._wrap_packet(history)
+        self._handler.handle_history(packet)
         # self._publish(packet)
 
-    def publish_history(self, data: dict, step: int = None):
-        self._publish_history({"step": step, "item": data})
+    def publish_history(self, data: dict):
+        history = pkt.HistoryPacket(data)
+        self._publish_history(history)
 
     def _publish_stats(self, stats: pkt.StatsPacket) -> None:
-        packet = self._make_packet(stats)
-        self._router.route_stats(stats)
+        packet = self._wrap_packet(stats)
+        self._handler.handle_stats(packet)
         # self._publish(packet)
 
     def publish_stats(self, data: dict):
@@ -124,10 +139,9 @@ class Interface(object):
         self._publish_stats({"item": data})
 
     def _publish_console(self, console: pkt.ConsolePacket) -> None:
-        packet = self._make_packet(console)
-        self._router.route_console(console)
+        packet = self._wrap_packet(console)
+        self._handler.handle_console(packet)
         # self._publish(packet)
 
     def publish_console(self, data: dict):
-        # TODO: sync step with history
         self._publish_console({"item": data})

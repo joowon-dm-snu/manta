@@ -21,7 +21,7 @@ class History(object):
         self.flush()
 
     def set_callback(self, cb):
-        # TODO: check callback gets arguments for row and step
+        # TODO: check callback gets arguments for row
         self._callback = cb
 
     def flush(self):
@@ -30,7 +30,7 @@ class History(object):
             self._data["_runtime"] = int(self._data.get("_runtime", time.time() - self._start_time))
             self._data["_timestamp"] = int(self._data.get("_timestamp", time.time()))
             if self._callback:
-                self._callback(row=self._data, step=self._step)
+                self._callback(row=self._data)
             self._data = dict()
 
 

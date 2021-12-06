@@ -5,6 +5,7 @@ from manta_client.api import MantaAPI
 
 from . import manta_login, manta_setup
 from .backend.backend import Backend
+from .libs import globals
 from .manta_experiment import Experiment
 
 
@@ -103,12 +104,16 @@ class _MantaInitiator(object):
         settings = self.settings
 
         backend = Backend(api=self._api)
+        backend.init_internal_process()
+
         print("start backend")
 
         experiment = Experiment(config=self.config, settings=settings)
         experiment.set_backend(backend)
         experiment.set_observers(self.observers)
         print("create experiment")
+
+        experiment.on_init()
 
         if settings._offline:
             pass
@@ -125,8 +130,8 @@ class _MantaInitiator(object):
         # TODO: notify server experiment start
 
         # TODO: global-vars setting
-
-        # TODO: run._on_start()
+        globals.set_global(experiment=experiment)
+        experiment.on_start()
         return experiment
 
 

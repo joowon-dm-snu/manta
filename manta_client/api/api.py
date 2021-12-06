@@ -26,6 +26,8 @@ class MantaAPI(object):
 
     @property
     def api_key(self):
+        if self._settings.api_key:
+            return self._settings.api_key
         return env.get_api_key(self._settings.base_url)
 
     @property
