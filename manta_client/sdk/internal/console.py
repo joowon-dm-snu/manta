@@ -13,7 +13,7 @@ class ThreadSafeWriter(object):
 
     def __init__(self, f: BinaryIO) -> None:
         self._f = f
-        self._lock = threading.lock()
+        self._lock = threading.Lock()
 
     def write(self, *args, **kargs) -> None:
         self._lock.acquire()
@@ -77,7 +77,7 @@ class ConsoleSync(object):
 
     @property
     def output_save_path(self):
-        dirpath = self._experiment._settings.files_dir
+        dirpath = self._experiment._settings.experiemnt_dir
         filename = filenames.CONSOLE_FNAME
         return os.path.join(dirpath, filename)
 
@@ -92,14 +92,14 @@ class ConsoleSync(object):
     def _sync_wrap(self):
         out_sync = stream.StreamWrapper(
             src="stdout",
-            cbs=[
+            callbacks=[
                 lambda data: self._callback("stdout", data),  # to server
                 self._output_writer.write,  # to local
             ],
         )
         err_sync = stream.StreamWrapper(
             src="stderr",
-            cbs=[
+            callbacks=[
                 lambda data: self._callback("stderr", data),
                 self._output_writer.write,
             ],

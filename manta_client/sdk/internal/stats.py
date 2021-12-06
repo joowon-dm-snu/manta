@@ -21,7 +21,7 @@ TODO: how about initiating systemstat in experiment somewhere like on_init
 """
 
 
-class SystemStat(object):
+class SystemStats(object):
     def __init__(self, interface: Interface, pid: int = None, method: str = "mean") -> None:
         try:
             pynvml.nvmlInit()
