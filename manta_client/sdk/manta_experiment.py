@@ -1,9 +1,11 @@
 import time
 from typing import Any, Dict, Optional, Sequence
 
+import manta_client as mc
 from manta_client import Settings
 from manta_client.base.packet import ExperimentPacket
 
+from .internal import meta, stats
 from .internal.console import ConsoleSync
 from .manta_history import History
 
@@ -79,9 +81,9 @@ class Experiment(object):
     def set_observers(self, observer):
         self._observers = observer
 
-    def _history_callback(self, row, step):
+    def _history_callback(self, row):
         if self._backend and self._backend.interface:
-            self._backend.interface.publish_history(row, step)
+            self._backend.interface.publish_history(row)
 
     def _console_callback(self, name, data):
         if self._backend and self._backend.interface:
@@ -148,19 +150,25 @@ class Experiment(object):
     def start_time(self) -> int:
         return self._start_time
 
-    def on_start(self):
-        pass
-
     def on_init(self):
-        # TODO: log codes
-        self._save_codes()
+        # TODO: log codes. do it on meta
+        # self._save_codes()
         # TODO: show exp info
         self._display()
+        mc.util.mkdir(self._settings.experiemnt_dir)
 
         self._controller = ProcessController()
+
         self.history = History(self)
         self.history.set_callback(self._history_callback)
+
+    def on_start(self):
         self._console_start()
+        # TODO: code location can be changed
+        if not self._settings._disable_stats:
+            self._stats_start()
+        if not self._settings._disable_meta:
+            self._meta_start()
 
     def log(self, data: Dict[str, Any]):
         self.history._row_update(data)
@@ -173,11 +181,19 @@ class Experiment(object):
         # TODO: show experiment information
         pass
 
+    def _stats_start(self):
+        self._stats = stats.SystemStats(interface=self._backend.interface)
+        self._stats.start()
+
+    def _meta_start(self):
+        self._meta = meta.Meta()
+        self._meta.start()
+
     def _console_start(self):
         # sync option = REDIRECT, WRAP, OFF
         self.console = ConsoleSync(self)
         self.console.set_callback(self._console_callback)
-        self.console.sync(option="redirect")
+        self.console.sync(option="wrap")
 
     def _console_stop(self):
         self.console.stop()
