@@ -1,10 +1,19 @@
-__version__ = "0.1.0"
+from manta_client import sdk
 
-import manta_client as mc
+__version__ = "0.1.0.dev1"
 
-from .base import Config, Settings
-from .sdk import init, login, setup
+init = sdk.init
+setup = sdk.setup
+login = sdk.login
 
-# TODO: these initial globals should be init when mc.init is called.
-mc.config = Config()
-mc.setting = Settings()
+
+# global vars
+config = None
+meta = None
+experiment = None
+
+# global functions
+log = None
+
+
+__all__ = ["__version__", "init", "setup", "login", "config", "meta", "experiment", "log"]
