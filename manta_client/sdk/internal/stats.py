@@ -48,6 +48,7 @@ class SystemStats(object):
         if self._thread is None:
             self._shutdown = False
             self._thread = threading.Thread(target=self._thread_body)
+            self._thread.name = "SystemStatsThread"
             self._thread.daemon = True
 
         if not self._thread.is_alive():
