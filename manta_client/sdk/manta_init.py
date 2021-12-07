@@ -129,7 +129,18 @@ class _MantaInitiator(object):
         # TODO: notify server experiment start
 
         # TODO: global-vars setting
-        globals.set_global(experiment=experiment)
+        globals.set_globals(
+            experiment=experiment,
+            config=experiment.config,
+            meta=experiment.meta,
+            summary=experiment.summary,
+            log=experiment.log,
+            save=experiment.save,
+            alarm=experiment.alarm,
+            use_artifact=experiment.use_artifact,
+            log_artifact=experiment.log_artifact,
+        )
+
         experiment.on_start()
         return experiment
 
