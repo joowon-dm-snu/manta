@@ -22,7 +22,6 @@ class MantaAPI(object):
         self._team_id = None
         self._project_id = None
         self._experiment_id = None
-        self.setup()
 
     @property
     def api_key(self):
@@ -38,10 +37,6 @@ class MantaAPI(object):
     def team_id(self):
         return self._team_id
 
-    @team_id.setter
-    def team_id(self, team_id: str):
-        self._team_id = team_id
-
     @property
     def project_id(self):
         return self._project_id
@@ -53,26 +48,44 @@ class MantaAPI(object):
 
     def setup(self):
         """
-        Project creation need team_id, so set team id here
-
-        default team name == my name
+        1. set team by using settings.entity
+        2. set project by using settings.project
         """
-        return 1  # TODO: pending for Personal team decision
-        team_name = self._settings.team_name or self.profile()["name"]
+        s = self._settings
 
-        for team in self.teams():
-            if team["name"] == team_name:
-                self._client.set_team(team_name)
-                self._team_id = team["id"]
+        self._team_id = None
+        self._project_id = None
+        self._experiment_id = None
 
-        # TODO: (kjw) back propagate to settings
-        self._settings.team = team_name
+        # set team
+        team_name = s.entity
+        if team_name:
+            for team in self.teams():
+                if team["uid"] == team_name:
+                    self._team_id = team["Id"]
+                    break
+        else:
+            # TODO: server API not yet implemented
+            self._team_id = self.get_default_team()["Id"]
+
+        # set project
+        project_name = s.project
+        for proj in self.projects():
+            if proj["name"] == project_name:
+                self._project_id = proj["Id"]
+                break
+
+        if self._project_id is None:
+            self.create_project(name=project_name)
 
     def profile(self):
         return self.client.request_json("get", "user/profile")
 
     def teams(self):
         return self.client.request_json("get", "team/my")["teams"]
+
+    def get_default_team(self):
+        return self.client.request_json("get", "team/personal")
 
     def get_team(self, team_id: str = None) -> Dict:
         team_id = team_id or self.team_id

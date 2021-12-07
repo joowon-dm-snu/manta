@@ -29,10 +29,11 @@ class _MantaInitiator(object):
             for k, v in data.items():
                 self.config[k] = v
 
-    def _setup_login(self, settings):
-        self._api = MantaAPI(settings=settings)
-        manta_login.login(api=self._api)
-        # TODO: settings.update(api.entity, ...) # update entity or somethings
+    def _setup_login(self):
+        # TODO: will be handled soon
+        logged_in = manta_login.login(api=self._api)
+        if True:  # logged_in:
+            self._api.setup()
 
     def _setup_server_settings(self, settings):
         """
@@ -73,15 +74,17 @@ class _MantaInitiator(object):
         config_kwargs = kwargs.pop("config", None) or dict()
         self._setup_configs(config_kwargs)
 
-        # TODO: (kjw) online / offline mode
-        if not settings._offline:
-            self._setup_login(settings=settings)
-
-        # TODO: (kjw) priority of server settings need to be reviewed. (vs init kwargs)
-        self._setup_server_settings(settings=settings)
-
         # working_dir, entity, project, experiment, tags, memo, save_code
         settings.update_init(kwargs)
+
+        # create api instance
+        self._api = MantaAPI(settings=settings)
+
+        # TODO: (kjw) online / offline mode
+        if not settings._offline:
+            self._setup_login()
+            # TODO: (kjw) priority of server settings need to be reviewed. (vs init kwargs)
+            self._setup_server_settings(settings=settings)
 
         # make dirs & init log files
         self._setup_logger(settings)
@@ -126,7 +129,12 @@ class _MantaInitiator(object):
 
             # TODO: cleaning
 
-        # TODO: notify server experiment start
+            # TODO: notify server experiment start by backend
+            res = backend._api.create_experiment()
+
+            # TODO: add fail logic for cleaning and tear-down
+            if not res:
+                pass
 
         # TODO: global-vars setting
         globals.set_globals(
@@ -146,11 +154,11 @@ class _MantaInitiator(object):
 
 
 def init(
+    project: str,
     artfiact_dir: Optional[str] = None,
     config: Union[Dict, str, None] = None,
     mode: Optional[str] = None,
     entity: Optional[str] = None,
-    project: Optional[str] = None,
     id: Optional[str] = None,
     name: Optional[str] = None,
     tags: Optional[Sequence] = None,
@@ -159,10 +167,10 @@ def init(
     settings: Union[Settings, Dict[str, Any], None] = None,
 ) -> Union[Experiment, None]:
     """
+    project: project name
     artfiact_dir: not yet
     config: config path
     entity: entity name, cover profile, teams both
-    project: project name
     experiment: experiment name
     tags: tags
     memo: long description
