@@ -5,9 +5,15 @@ import manta_client as mc
 from manta_client import Settings
 from manta_client.base.packet import ExperimentPacket
 
-from .internal import meta, stats
-from .internal.console import ConsoleSync
-from .manta_history import History
+from .internal import (  # noqa: F401
+    alarm,
+    artifact,
+    console,
+    history,
+    meta,
+    stats,
+    summary,
+)
 
 
 class ProcessController(object):
@@ -18,10 +24,14 @@ EXPERIMENT_PREFIX = "experiment_"
 
 
 class Experiment(object):
-    def __init__(self, settings: Settings = None, config: Optional[Dict[str, Any]] = None) -> None:
-        self._config = config
+    def __init__(
+        self, settings: Settings = None, config: Optional[Dict[str, Any]] = None, meta: Optional[Dict[str, Any]] = None
+    ) -> None:
+
         self._settings = settings
         self._settings.update_times()
+        self._config = config
+        self._meta = meta
 
         # by set functions
         self._backend = None
@@ -40,6 +50,7 @@ class Experiment(object):
 
         # initiated at on_start
         self.history = None
+        self.summary = None
         self.console = None
         self._controller = None
         self._setup_from_settings(settings)
@@ -113,6 +124,10 @@ class Experiment(object):
         return self._config
 
     @property
+    def meta(self) -> Dict[str, Any]:
+        return self._meta
+
+    @property
     def dir(self) -> str:
         return self._name
 
@@ -162,8 +177,11 @@ class Experiment(object):
 
         self._controller = ProcessController()
 
-        self.history = History(self)
+        self.history = history.History(self)
         self.history.set_callback(self._history_callback)
+
+        # TODO: init summary
+        self.summary = None
 
     def on_start(self):
         self._console_start()
@@ -172,9 +190,6 @@ class Experiment(object):
             self._stats_start()
         if not self._settings._disable_meta:
             self._meta_start()
-
-    def log(self, data: Dict[str, Any]):
-        self.history._row_update(data)
 
     def _save_code(self):
         # TODO: Do this on meta save?
@@ -194,9 +209,25 @@ class Experiment(object):
 
     def _console_start(self):
         # sync option = REDIRECT, WRAP, OFF
-        self.console = ConsoleSync(self)
+        self.console = console.ConsoleSync(self)
         self.console.set_callback(self._console_callback)
         self.console.sync(option="wrap")
 
     def _console_stop(self):
         self.console.stop()
+
+    def log(self, data: Dict[str, Any]):
+        self.history._row_update(data)
+
+    def save(self):
+        pass
+
+    def alarm(self):
+        pass
+        alarm
+
+    def use_artifact(self):
+        pass
+
+    def log_artifact(self):
+        pass
