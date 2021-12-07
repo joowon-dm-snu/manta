@@ -67,7 +67,6 @@ class Settings(object):
         api_key: str = None,
         mode: str = None,
         entity: str = None,
-        team_name: str = None,
         project: str = None,
         experiment_id: str = None,
         experiment_name: str = None,
