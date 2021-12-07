@@ -200,6 +200,10 @@ class MantaAPI(object):
         """
         return {}
 
+    def send_heartbeat(self, **kwargs):
+        # TODO: Ask backend need something
+        pass
+
     def send_experiment_record(self, histories: List[Dict] = None, systems: List[Dict] = None, logs: List[Dict] = None):
         kwargs = locals()
         return self.client.request("post", f"experiment/{self.experiment_id}/record", kwargs)
