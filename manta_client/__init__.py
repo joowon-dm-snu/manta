@@ -6,14 +6,29 @@ init = sdk.init
 setup = sdk.setup
 login = sdk.login
 
-
 # global vars
+experiment = None
 config = None
 meta = None
-experiment = None
 
 # global functions
 log = None
+save = None
+alarm = None
+use_artifact = None
+log_artifact = None
 
-
-__all__ = ["__version__", "init", "setup", "login", "config", "meta", "experiment", "log"]
+__all__ = [
+    "__version__",
+    "init",
+    "setup",
+    "login",
+    "experiment",
+    "config",
+    "meta",
+    "log",
+    "save",
+    "alarm",
+    "use_artifact",
+    "log_artifact",
+]
