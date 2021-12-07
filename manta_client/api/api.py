@@ -189,7 +189,7 @@ class MantaAPI(object):
 
     def send_experiment_record(self, histories: List[Dict] = None, systems: List[Dict] = None, logs: List[Dict] = None):
         kwargs = locals()
-        return self.client.request_json("post", f"experiment/{self.experiment_id}/record", kwargs)
+        return self.client.request("post", f"experiment/{self.experiment_id}/record", kwargs)
 
     def artifacts(self, *args, **kwargs):
         """
