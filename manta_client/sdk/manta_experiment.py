@@ -5,7 +5,15 @@ import manta_client as mc
 from manta_client import Settings
 from manta_client.base.packet import ExperimentPacket
 
-from .internal import alarm, artifact, console, history, meta, stats, summary
+from .internal import (  # noqa: F401
+    alarm,
+    artifact,
+    console,
+    history,
+    meta,
+    stats,
+    summary,
+)
 
 
 class ProcessController(object):
@@ -42,6 +50,7 @@ class Experiment(object):
 
         # initiated at on_start
         self.history = None
+        self.summary = None
         self.console = None
         self._controller = None
         self._setup_from_settings(settings)
@@ -171,6 +180,9 @@ class Experiment(object):
         self.history = history.History(self)
         self.history.set_callback(self._history_callback)
 
+        # TODO: init summary
+        self.summary = None
+
     def on_start(self):
         self._console_start()
         # TODO: code location can be changed
@@ -212,6 +224,7 @@ class Experiment(object):
 
     def alarm(self):
         pass
+        alarm
 
     def use_artifact(self):
         pass
