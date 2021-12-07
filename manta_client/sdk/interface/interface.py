@@ -42,7 +42,7 @@ class SendManager:
         self.fs = fs
 
     def send_history(self, packet: pkt.Packet):
-        history = packet.history.item
+        history = packet.history.as_dict()
         self.fs.push("histories", history)
 
     def send_stats(self, packet: pkt.Packet):
@@ -50,11 +50,11 @@ class SendManager:
         # row["_wandb"] = True
         # row["_timestamp"] = now
         # row["_runtime"] = int(now - self._run.start_time.ToSeconds())
-        stats = packet.stats
+        stats = packet.stats.as_dict()
         self.fs.push("systems", stats)
 
     def send_console(self, packet: pkt.Packet):
-        console = packet.console
+        console = packet.console.as_dict()
         self.fs.push("logs", console)
 
 
@@ -126,7 +126,7 @@ class Interface(object):
         # self._publish(packet)
 
     def publish_history(self, data: dict):
-        history = pkt.HistoryPacket(data)
+        history = pkt.HistoryPacket(item=data)
         self._publish_history(history)
 
     def _publish_stats(self, stats: pkt.StatsPacket) -> None:
@@ -136,12 +136,14 @@ class Interface(object):
 
     def publish_stats(self, data: dict):
         # TODO: sync step with history
-        self._publish_stats({"item": data})
+        stats = pkt.StatsPacket(item=data)
+        self._publish_stats(stats)
 
     def _publish_console(self, console: pkt.ConsolePacket) -> None:
         packet = self._wrap_packet(console)
         self._handler.handle_console(packet)
         # self._publish(packet)
 
-    def publish_console(self, data: dict):
-        self._publish_console({"item": data})
+    def publish_console(self, _stream, lines):
+        console = pkt.ConsolePacket(_stream=_stream, lines=lines)
+        self._publish_console(console)
