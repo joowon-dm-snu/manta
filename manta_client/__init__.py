@@ -3,7 +3,7 @@ import manta_client.base as manta_base
 Settings = manta_base.Settings
 Config = manta_base.Config
 
-from manta_client import sdk
+from manta_client import env, sdk, utils
 
 __version__ = "0.1.0.dev1"
 
