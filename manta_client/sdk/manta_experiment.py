@@ -5,9 +5,7 @@ import manta_client as mc
 from manta_client import Settings
 from manta_client.base.packet import ExperimentPacket
 
-from .internal import meta, stats
-from .internal.console import ConsoleSync
-from .manta_history import History
+from .internal import console, history, meta, stats
 
 
 class ProcessController(object):
@@ -162,7 +160,7 @@ class Experiment(object):
 
         self._controller = ProcessController()
 
-        self.history = History(self)
+        self.history = history.History(self)
         self.history.set_callback(self._history_callback)
 
     def on_start(self):
@@ -194,7 +192,7 @@ class Experiment(object):
 
     def _console_start(self):
         # sync option = REDIRECT, WRAP, OFF
-        self.console = ConsoleSync(self)
+        self.console = console.ConsoleSync(self)
         self.console.set_callback(self._console_callback)
         self.console.sync(option="wrap")
 
