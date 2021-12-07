@@ -125,7 +125,6 @@ class _MantaInitiator(object):
             # TODO: error handling
 
             # TODO: cleaning
-            pass
 
         # TODO: notify server experiment start
 

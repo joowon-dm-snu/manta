@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
@@ -6,6 +7,18 @@ from typing import Any, Dict, List, Optional, Union
 Packet: Can be saved for offline or user wants
 Request & Response: interaction with server 
 """
+
+
+@dataclass
+class _PacketDefault(object):
+    _timestamp: int = None
+
+    def as_dict(self):
+        res = dict()
+        return self.__dict__
+
+    def __post_init__(self):
+        self._timestamp = int(time.time() * 1000)
 
 
 @dataclass
@@ -37,20 +50,19 @@ class Packet:
 
 
 @dataclass
-class HistoryPacket:
-    item: Dict[str, Union[str, int, float]]
+class HistoryPacket(_PacketDefault):
+    item: Dict[str, Union[str, int, float]] = None
 
 
 @dataclass
-class SummaryPacket:
+class SummaryPacket(_PacketDefault):
     pass
 
 
 @dataclass
-class ConsolePacket:
-    stream: str  # stderr or stdout
-    timestamp: int
-    lines: str
+class ConsolePacket(_PacketDefault):
+    lines: str = None
+    _stream: str = None  # stderr or stdout
 
 
 @dataclass
@@ -60,21 +72,20 @@ class _StatsItem:
 
 
 @dataclass
-class StatsPacket:
-    item: List[_StatsItem]
-    timestamp: int
-    step: int
+class StatsPacket(_PacketDefault):
+    item: List[_StatsItem] = None
+    _step: int = None
 
 
 @dataclass
-class ArtifactPacket:
-    experiment_id: str
-    experiment_name: str
-    project: str
-    entity: str
-    checksum: str
-    description: str
-    contents: List["ArtifactManifest"]
+class ArtifactPacket(_PacketDefault):
+    experiment_id: str = None
+    experiment_name: str = None
+    project: str = None
+    entity: str = None
+    checksum: str = None
+    description: str = None
+    contents: List["ArtifactManifest"] = None
 
 
 @dataclass
@@ -94,33 +105,33 @@ class ArtifactManifestDetail:
 
 
 @dataclass
-class AlarmPacket:
-    title: str
-    text: str
-    level: str
+class AlarmPacket(_PacketDefault):
+    title: str = None
+    text: str = None
+    level: str = None
 
 
 @dataclass
-class ExperimentPacket:
-    experiment_id: str
-    entity: str
-    project: str
+class ExperimentPacket(_PacketDefault):
+    experiment_id: str = None
+    entity: str = None
+    project: str = None
 
 
 @dataclass
-class SettingsPacket:
+class SettingsPacket(_PacketDefault):
     pass
 
 
 @dataclass
-class ConfigPacket:
+class ConfigPacket(_PacketDefault):
     pass
 
 
 @dataclass
-class MetaPacket:
-    group: str
-    job: str
+class MetaPacket(_PacketDefault):
+    group: str = None
+    job: str = None
 
 
 @dataclass

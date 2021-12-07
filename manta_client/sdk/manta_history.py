@@ -28,7 +28,6 @@ class History(object):
         if len(self._data) > 0:
             self._data["_step"] = self._step
             self._data["_runtime"] = int(self._data.get("_runtime", time.time() - self._start_time))
-            self._data["_timestamp"] = int(self._data.get("_timestamp", time.time()))
             if self._callback:
                 self._callback(row=self._data)
             self._data = dict()

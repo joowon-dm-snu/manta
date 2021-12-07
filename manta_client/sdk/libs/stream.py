@@ -89,11 +89,12 @@ class StreamWrapper(StreamBase):
 
         self._queue = queue.Queue()
         self._stopped = threading.Event()
+
         # # TODO: check experiment initiated? settings online?
-        # self._thread = threading.Thread(target=self._thread_body)
-        # self._thread.daemon = True
-        # self._thread.start()
-        # self._installed = True
+        self._thread = threading.Thread(target=self._thread_body)
+        self._thread.daemon = True
+        self._thread.start()
+        self._installed = True
 
     def uninstall(self):
         if not self._installed:

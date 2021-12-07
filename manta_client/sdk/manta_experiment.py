@@ -86,8 +86,11 @@ class Experiment(object):
             self._backend.interface.publish_history(row)
 
     def _console_callback(self, name, data):
+        if not data:
+            return
+
         if self._backend and self._backend.interface:
-            self._backend.interface.publish_console(name, data)
+            self._backend.interface.publish_console(_stream=name, lines=data)
 
     @property
     def entity(self) -> str:
