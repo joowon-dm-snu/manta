@@ -1,4 +1,5 @@
 import collections
+import itertools
 import queue
 import threading
 import time
@@ -31,6 +32,8 @@ class HandleManager:
         self._api = api
         self.fs = ApiStreamer(self._api)
         self.sm = SendManager(self.fs)
+
+        self.fs.start()
 
     def handle_history(self, packet: pkt.Packet):
         self.sm.send_history(packet)
@@ -68,7 +71,6 @@ FinishItem = collections.namedtuple("FinishItem", ("exitcode"))
 
 
 class ApiStreamer:
-
     # WARNING: DO NOT CHANGE VALUES BELOW, API WILL REJECT YOUR REQUEST.
     HEARTBEAT_SECONDS = 30
     MAX_ITEMS_PER_PUSH = 10000
@@ -81,14 +83,6 @@ class ApiStreamer:
         self._cnt = 0
         self._thread = None
 
-    def _reset_queue(self):
-        self._queue = dict(
-            histories=[],
-            systems=[],
-            logs=[],
-        )
-        self._cnt = 0
-
     def debounce_seconds(self):
         run_time = time.time() - self._start_time
         if run_time < 60:
@@ -100,12 +94,25 @@ class ApiStreamer:
 
     def _read_queue(self):
         wait_seconds = self.debounce_seconds()
-        return mc.utils.read_many_from_queue(self._queue, self.MAX_ITEMS_PER_PUSH, wait_seconds)
+        return mc.util.read_many_from_queue(self._queue, self.MAX_ITEMS_PER_PUSH, wait_seconds)
+
+    def _process_fileitem(self, items):
+        res = []
+        for item in items:
+            res.append(item.data)
+
+        return res
 
     def _aggregate_send(self, buffer):
-        # TODO: add aggregations
-        for record in buffer:
-            self.api.send_experiment_record(**record)
+        files = {}
+        # Groupby needs group keys to be sorted
+        buffer.sort(key=lambda c: c.filename)
+        for filename, file_items in itertools.groupby(buffer, lambda c: c.filename):
+            files[filename] = self._process_fileitem(file_items)
+        self.api.send_experiment_record(**files)
+
+    def _heartbeat_send(self):
+        self.api.send_heartbeat()
 
     def _thread_body(self):
         buffer = []
@@ -121,30 +128,28 @@ class ApiStreamer:
                     buffer.append(item)
 
             cur_time = time.time()
-
             if buffer and cur_time - latest_post_time > self.debounce_seconds():
                 latest_post_time = cur_time
                 latest_heartbeat_time = cur_time
                 self._aggregate_send(buffer)
                 buffer = []
 
-            # if stats are disabled, theres something we need to send heartbeat to server
+            # if stats are disabled, theres something we need to send heartbeat to server for tracking experiment status
             if cur_time - latest_heartbeat_time > self.HEARTBEAT_SECONDS:
                 latest_heartbeat_time = cur_time
-                self.api.send_heartbeat()
+                self._heartbeat_send()
 
         # TODO: send api stream finished to server
         pass
 
     def start(self):
-        self._reset_queue()
         self._thread = threading.Thread(target=self._thread_body)
         self._thread.name = "ApiStreamThread"
         self._thread.daemon = True
         self._thread.start()
 
     def push(self, file, data):
-        self._queue.put(self.Item(file, data))
+        self._queue.put(Item(file, data))
 
     def finish(self, exitcode):
         """Cleans up.

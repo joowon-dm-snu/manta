@@ -231,3 +231,6 @@ class Experiment(object):
 
     def log_artifact(self):
         pass
+
+    def finish(self):
+        pass
