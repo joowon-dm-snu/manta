@@ -12,6 +12,11 @@ from manta_client import Settings
 # from ..manta_experiment import Experiment
 
 """
+Overal architectures will be changed at next version 
+"""
+
+
+"""
 Interface -> Handler -> Store(Future Implement) -> Sender -> ApiStreamer
 
 Interface: create packets, pass it to handler
@@ -44,6 +49,9 @@ class HandleManager:
     def handle_console(self, packet: pkt.Packet):
         self.sm.send_console(packet)
 
+    def finish(self, exitcode):
+        self.fs.finish(exitcode=exitcode)
+
 
 class SendManager:
     def __init__(self, fs):
@@ -64,6 +72,9 @@ class SendManager:
     def send_console(self, packet: pkt.Packet):
         console = packet.console.as_dict()
         self.fs.push("logs", console)
+
+    def finish(self):
+        pass
 
 
 Item = collections.namedtuple("Item", ("filename", "data"))
@@ -123,6 +134,7 @@ class ApiStreamer:
             items = self._read_queue()
             for item in items:
                 if isinstance(item, FinishItem):
+                    print("finish item detected")
                     finished = item
                 else:
                     buffer.append(item)
@@ -160,6 +172,7 @@ class ApiStreamer:
         """
         self._queue.put(FinishItem(exitcode))
         # TODO: cleaning
+        print("waiting for finish item")
         self._thread.join()
         # TODO: show exception info
 
@@ -168,6 +181,10 @@ class Interface(object):
     def __init__(self, api):
         self._api = api
         self._handler = HandleManager(self._api)  # TODO: remove direct handler access. will be replaced to queue
+
+    def finish(self):
+        # TODO: finish function will be handled somewhere else
+        self._handler.finish(1)
 
     def _wrap_packet(self, packet):
         p = pkt.Packet.init_from(packet)

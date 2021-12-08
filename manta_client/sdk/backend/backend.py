@@ -12,3 +12,6 @@ class Backend(object):
 
     def init_internal_process(self):
         self._setup_interface()
+
+    def cleanup(self):
+        self.interface.finish()

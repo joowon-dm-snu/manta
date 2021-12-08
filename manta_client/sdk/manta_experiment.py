@@ -1,5 +1,6 @@
+import atexit
 import time
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence, Type
 
 import manta_client as mc
 from manta_client import Settings
@@ -17,7 +18,17 @@ from .internal import (  # noqa: F401
 
 
 class ProcessController(object):
-    pass
+    def __init__(self) -> None:
+        pass
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def join(self):
+        pass
 
 
 EXPERIMENT_PREFIX = "experiment_"
@@ -175,8 +186,6 @@ class Experiment(object):
         self._display()
         mc.util.mkdir(self._settings.experiemnt_dir)
 
-        self._controller = ProcessController()
-
         self.history = history.History(self)
         self.history.set_callback(self._history_callback)
 
@@ -184,12 +193,40 @@ class Experiment(object):
         self.summary = None
 
     def on_start(self):
+        self._controller_start()
         self._console_start()
         # TODO: code location can be changed
         if not self._settings._disable_stats:
             self._stats_start()
         if not self._settings._disable_meta:
             self._meta_start()
+        atexit.register(lambda: self.cleanup())
+
+    def on_finish(self):
+        """
+        closing all process, threads
+        """
+        if self._controller:
+            self._controller.stop()
+
+        self.history.flush()
+        self._console_stop()
+
+        # TODO: polling for all data be uploaded
+        # TODO: show final summary
+        #
+        if self._backend:
+            print("start backend cleanup")
+            self._backend.cleanup()
+
+        if self._controller:
+            self._controller.join()
+
+    def on_exit(self):
+        """
+        show summarized messages, url, summary, artifacts ...
+        """
+        pass
 
     def _save_code(self):
         # TODO: Do this on meta save?
@@ -206,6 +243,10 @@ class Experiment(object):
     def _meta_start(self):
         self._meta = meta.Meta()
         self._meta.start()
+
+    def _controller_start(self):
+        self._controller = ProcessController()
+        self._controller.start()
 
     def _console_start(self):
         # sync option = REDIRECT, WRAP, OFF
@@ -234,3 +275,19 @@ class Experiment(object):
 
     def finish(self):
         pass
+
+    def cleanup(self, exitcode: int = None):
+        # TODO: pre-checks?
+        # TODO: exitcodes?
+        self._exitcode = exitcode
+
+        # TODO: try - except
+        self.on_finish()
+        self.on_exit()
+
+    def __exit__(
+        self,
+        exc_type: Type[BaseException],
+    ) -> bool:
+        exitcode = 0 if exc_type is None else 1
+        self.finish(exitcode)
