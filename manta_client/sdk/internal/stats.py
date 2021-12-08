@@ -13,7 +13,7 @@ from manta_client.sdk.interface.interface import Interface
 # TODO: add thread
 
 # WARNING: DO NOT CHANGE THIS VALUE, SERVER WILL BLOCK YOUR REQUEST
-DEBOUNCE_SECONDS = 2
+DEBOUNCE_SECONDS = 1
 FLUSHING_SAMPLE_COUNTS = 5
 
 """
@@ -48,6 +48,7 @@ class SystemStats(object):
         if self._thread is None:
             self._shutdown = False
             self._thread = threading.Thread(target=self._thread_body)
+            self._thread.name = "SystemStatsThread"
             self._thread.daemon = True
 
         if not self._thread.is_alive():

@@ -92,6 +92,7 @@ class StreamWrapper(StreamBase):
 
         # # TODO: check experiment initiated? settings online?
         self._thread = threading.Thread(target=self._thread_body)
+        self._thread.name = "ConsoleStreamThread"
         self._thread.daemon = True
         self._thread.start()
         self._installed = True

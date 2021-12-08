@@ -1,7 +1,8 @@
 import argparse
 import os
+import queue
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import shortuuid
 import yaml
@@ -17,10 +18,12 @@ def mkdir(path: Union[str, Path], exist_ok: bool = True) -> bool:
         print(exc)
         return False
 
+
 def parent_makedirs(path: Union[str, Path], exist_ok: bool = True) -> bool:
     path = Path(path).parent
     mkdir(path)
-    
+
+
 def read_yaml(path: Union[str, Path], encoding="utf-8") -> Dict:
     result = dict()
 
@@ -82,3 +85,18 @@ def json_value_sanitize(value):
 def generate_id(length=10):
     run_gen = shortuuid.ShortUUID(alphabet=list("0123456789abcdefghijklmnopqrstuvwxyz"))
     return run_gen.random(length)
+
+
+def read_many_from_queue(q: queue.Queue, max_items: int, timeout: int) -> List[Tuple]:
+    try:
+        item = q.get(True, timeout)
+    except queue.Empty:
+        return []
+    items = [item]
+    for i in range(max_items):
+        try:
+            item = q.get_nowait()
+        except queue.Empty:
+            return items
+        items.append(item)
+    return items
