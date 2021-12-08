@@ -13,7 +13,7 @@ from manta_client.sdk.interface.interface import Interface
 # TODO: add thread
 
 # WARNING: DO NOT CHANGE THIS VALUE, SERVER WILL BLOCK YOUR REQUEST
-DEBOUNCE_SECONDS = 2
+DEBOUNCE_SECONDS = 1
 FLUSHING_SAMPLE_COUNTS = 5
 
 """
