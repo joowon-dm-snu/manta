@@ -105,7 +105,7 @@ class StreamWrapper(StreamBase):
         self._stopped.set()
         # if self._thread.is_alive():
         #     self._thread.join()
-        self.flush()
+        self._flush()
         self._installed = False
         super(StreamWrapper, self).uninstall()
 
